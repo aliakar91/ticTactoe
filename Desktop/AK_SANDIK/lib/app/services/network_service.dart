@@ -88,8 +88,6 @@ class NetworkService {
           signOut();
         }
       } else {
-        print(res.statusCode);
-        print(jsonDecode(utf8.decode(res.bodyBytes)));
         return NetworkResponse(
           statusCode: res.statusCode,
           body: res.statusCode != HttpStatus.internalServerError

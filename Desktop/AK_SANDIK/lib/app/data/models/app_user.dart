@@ -1,16 +1,16 @@
 class AppUser {
-  String tcNo;
+  String? tcNo;
   String fullName;
-  String districtId;
-  String cityId;
-  String group;
+  String? districtId;
+  String? cityId;
+  String? group;
 
   AppUser({
-    required this.tcNo,
+    this.tcNo,
     required this.fullName,
-    required this.districtId,
-    required this.cityId,
-    required this.group,
+    this.districtId,
+    this.cityId,
+    this.group,
   });
 
   factory AppUser.fromJson(Map<String, dynamic> json) {

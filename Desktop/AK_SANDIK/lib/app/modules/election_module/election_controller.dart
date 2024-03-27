@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:math';
 import 'package:ak_sandik/app/routes/routes.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_document_scanner/flutter_document_scanner.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:path_provider/path_provider.dart' as path_provider;
@@ -18,15 +17,14 @@ import 'package:ak_sandik/app/data/repositories/election_repository.dart';
 import 'package:ak_sandik/app/globals/localizations/localization_keys.dart';
 import 'package:ak_sandik/app/data/models/network_response.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:exif/exif.dart';
-import 'package:image/image.dart' as img;
 
 class ElectionController extends GetxController {
   final _isLoading = true.obs;
+  final _imageLoading = false.obs;
   File? districtPhoto;
   File? councilPhoto;
   File? cityPhoto;
-
+  final Set<int> _usedNumbers = {};
   final box = GetStorage();
   late LinkedBallotBox linkedBallotBox;
   final electionRepository = ElectionRepository();
@@ -36,6 +34,11 @@ class ElectionController extends GetxController {
   bool get isLoading => _isLoading.value;
 
   set isLoading(value) => _isLoading.value = value;
+
+  bool get imageLoading => _imageLoading.value;
+
+  set imageLoading(value) => _imageLoading.value = value;
+
   final documentScannerController = DocumentScannerController();
 
   @override
@@ -52,7 +55,6 @@ class ElectionController extends GetxController {
   Future<dynamic> createBallotBox(String id, String status) async {
     var readVoteList = await box.read(id);
     bool isNotNull = readVoteList != null && status != Status.three.value;
-
     if (isNotNull) {
       linkedBallotBox = LinkedBallotBox.fromJson(readVoteList);
     } else {
@@ -68,23 +70,28 @@ class ElectionController extends GetxController {
     update();
   }
 
+  void toggleImageLoading() {
+    imageLoading = !imageLoading;
+    update();
+  }
+
   Future<dynamic> sendReportImage() async {
-    toggleLoading();
+    toggleImageLoading();
     NetworkResponse res = await electionRepository.sendReportImages(
       int.parse(linkedBallotBox.id),
       districtPhoto?.path,
       councilPhoto?.path,
       cityPhoto?.path,
     );
+    toggleImageLoading();
     if (res.statusCode == HttpStatus.ok) {
       AppToastMessage.showSuccessMessage(
-        LocalizationKeys.fotoEklemeBasariMesaj,
+        LocalizationKeys.tutanakEklemeBasariMesaj,
       );
       isStatusThree() ? Get.offAllNamed(Routes.mainScreen) : uploadImages(res);
     } else {
       AppToastMessage.showErrorMessage(LocalizationKeys.eklemeHataMesaj);
     }
-    toggleLoading();
   }
 
   int calculateTotalNumber(String type) {
@@ -117,7 +124,6 @@ class ElectionController extends GetxController {
       AppToastMessage.showErrorMessage(LocalizationKeys.alertUyariMesaj);
     }
     saveBox();
-    update();
   }
 
   void setInvalidVote(String type, int vote, bool isInvalid) {
@@ -132,7 +138,6 @@ class ElectionController extends GetxController {
       AppToastMessage.showErrorMessage(LocalizationKeys.alertUyariMesaj);
     }
     saveBox();
-    update();
   }
 
   void setPartyInvalidVote(String type, int vote, int index) {
@@ -154,21 +159,14 @@ class ElectionController extends GetxController {
     int status,
   ) async {
     try {
-      final XFile? image = await ImagePicker().pickImage(
-        source: source,
-        imageQuality: 64,
-        //maxHeight: 2200,
-        //maxWidth: 2200,
-      );
+      final XFile? image = await ImagePicker().pickImage(source: source);
       if (image == null) return;
-
-      File? imageTemporary = await fixExifRotation(image.path);
-      if (imageTemporary == null) return;
-
+      toggleImageLoading();
       final dir = await path_provider.getTemporaryDirectory();
-      final targetPath = '${dir.absolute.path}/temp.jpg';
+      int randomNumber = generateUniqueRandomNumber(1, 100);
+      final targetPath = '${dir.absolute.path}/$randomNumber.jpg';
       XFile? compressImage =
-          await compressAndGetFile(imageTemporary, targetPath);
+          await compressAndGetFile(File(image.path), targetPath);
 
       if (compressImage != null) {
         if (status == 0) {
@@ -199,8 +197,8 @@ class ElectionController extends GetxController {
       } else {
         AppToastMessage.showErrorMessage(LocalizationKeys.fotoEklemeHatasi);
       }
+      toggleImageLoading();
     } catch (e) {
-      print(e);
       AppToastMessage.showErrorMessage(
         LocalizationKeys.islemHataMesaj,
       );
@@ -220,7 +218,6 @@ class ElectionController extends GetxController {
       createVoteResult(VoteType.district.value),
       createVoteResult(VoteType.council.value)
     ];
-
     bool isSuccess = await electionRepository.sendVotesData(candidateList);
     if (isSuccess) {
       lastSendAt = DateTime.now();
@@ -269,6 +266,7 @@ class ElectionController extends GetxController {
   }
 
   void uploadImages(NetworkResponse res) {
+    toggleImageLoading();
     if (cityPhoto != null) {
       linkedBallotBox.getBoxType(VoteType.city.value).reportImage =
           res.body['linked_boxes'][0]['report_image'];
@@ -282,6 +280,7 @@ class ElectionController extends GetxController {
           res.body['linked_boxes'][2]['report_image'];
     }
     saveBox();
+    toggleImageLoading();
     cityPhoto = null;
     districtPhoto = null;
     councilPhoto = null;
@@ -289,15 +288,15 @@ class ElectionController extends GetxController {
   }
 
   void startTimer() {
-    int waitTime = 20 + Random().nextInt(20);
+    int waitTime = 35 + Random().nextInt(55);
     const oneSec = Duration(seconds: 1);
     _timer = Timer.periodic(
       oneSec,
       (Timer timer) {
         if (waitTime == 0) {
-          waitTime = 20 + Random().nextInt(20);
+          waitTime = 35 + Random().nextInt(55);
           if (linkedBallotBox.dateTime!.isAfter(lastSendAt)) {
-            //sendElectionResults();
+            sendElectionResults();
           }
         } else {
           waitTime--;
@@ -323,35 +322,13 @@ class ElectionController extends GetxController {
     );
     return result;
   }
-
-  Future<File?> fixExifRotation(String imagePath) async {
-    final originalFile = File(imagePath);
-    Uint8List imageBytes = await originalFile.readAsBytes();
-    final originalImage = img.decodeImage(imageBytes);
-    final height = originalImage?.height;
-    final width = originalImage?.width;
-    // Let's check for the image size
-    if (height! >= width!) {
-      return originalFile;
-    }
-    final exifData = await readExifFromBytes(imageBytes);
-    img.Image? fixedImage;
-    if (height < width) {
-      // rotate
-      if (exifData['Image Orientation']!.printable.contains('Horizontal')) {
-        fixedImage = img.copyRotate(originalImage!, angle: 90);
-      } else if (exifData['Image Orientation']!.printable.contains('180')) {
-        fixedImage = img.copyRotate(originalImage!, angle: -90);
-      } else {
-        fixedImage = img.copyRotate(originalImage!, angle: 0);
-      }
-    }
-
-    if (fixedImage != null) {
-      final fixedFile =
-          await originalFile.writeAsBytes(img.encodeJpg(fixedImage));
-      return fixedFile;
-    }
-    return null;
+  int generateUniqueRandomNumber(int min, int max) {
+    Random random = Random();
+    int randomNumber;
+    do {
+      randomNumber = min + random.nextInt(max - min + 1);
+    } while (_usedNumbers.contains(randomNumber));
+    _usedNumbers.add(randomNumber);
+    return randomNumber;
   }
 }

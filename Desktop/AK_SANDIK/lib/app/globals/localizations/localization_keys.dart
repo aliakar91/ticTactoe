@@ -2,7 +2,7 @@ class LocalizationKeys {
   static const String appBarSandik = "SANDIK";
   static const String giris = "Giriş";
   static const String tcNo = "Tc No";
-  static const String tcHataMesaj = "Tc No 11 karakter olmalıdır";
+  static const String telUyariMesaj = "Telefon numarasını eksik girdiniz";
   static const String sifre = "Şifre";
   static const String sandiklarim = "sandıklarım";
   static const String verilerYukleniyor = "Veriler Yükleniyor...";
@@ -11,7 +11,7 @@ class LocalizationKeys {
       "Lütfen bilgilerinizi kontrol ediniz!";
   static const String oyEklemeBasariMesaj = "Oy gönderme işlemi başarılı";
   static const String eklemeHataMesaj = "Bir hata meydana geldi";
-  static const String fotoEklemeBasariMesaj = "Foto ekleme başarılı";
+  static const String tutanakEklemeBasariMesaj = "Tutanak ekleme başarılı";
   static const String kesinSonuclariGonder = "Kesin Sonuçları Gönder";
   static const String tamam = "Tamam";
   static const String eminMisiniz = "Emin misiniz?";
@@ -52,5 +52,7 @@ class LocalizationKeys {
   static const String district = "district";
   static const String council = "council";
   static const String tutanak = "Tutanak";
-  static const String fotoEklemeHatasi = "Fotoğraf ekleme sırasında bir hata meydana geldi";
+  static const String fotoEklemeHatasi =
+      "Fotoğraf ekleme sırasında bir hata meydana geldi";
+  static const String telNo = "Tel No";
 }

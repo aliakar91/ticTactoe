@@ -8,8 +8,8 @@ class AuthRepository {
   final authProvider = AuthProvider();
   final box = GetStorage();
 
-  Future<dynamic> login(String tcNo, String password) async {
-    var data = {"tc_no": tcNo, "password": password};
+  Future<dynamic> login(String phoneNumber, String password) async {
+    var data = {"phone_number": phoneNumber, "password": password};
     var response = await authProvider.login(data);
 
     if (response.statusCode == HttpStatus.ok) {

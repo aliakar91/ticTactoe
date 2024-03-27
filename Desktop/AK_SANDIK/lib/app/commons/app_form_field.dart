@@ -13,6 +13,8 @@ class AppFormField extends StatelessWidget {
   final TextInputType? keyboardType;
   final int? minInputLength;
   final int? requiredInputLength;
+  final List<TextInputFormatter>? textInputFormatter;
+  final Function(String value)? onChanged;
 
   const AppFormField({
     super.key,
@@ -26,6 +28,8 @@ class AppFormField extends StatelessWidget {
     this.keyboardType,
     this.minInputLength,
     this.requiredInputLength,
+    this.textInputFormatter,
+    this.onChanged,
   });
 
   @override
@@ -38,9 +42,10 @@ class AppFormField extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           TextFormField(
+            inputFormatters: textInputFormatter ?? [],
             onTap: onTap,
+            onChanged:  onChanged,
             style: const TextStyle(fontSize: 16),
-            maxLength: maxInputLength,
             textAlignVertical: TextAlignVertical.center,
             controller: controller,
             keyboardType: keyboardType,

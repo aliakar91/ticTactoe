@@ -7,8 +7,8 @@ import 'package:ak_sandik/app/globals/localizations/localization_keys.dart';
 class LoginController extends GetxController {
   final authRepository = AuthRepository();
 
-  Future<void> login(String tcNo, String password) async {
-    bool isLogin = await authRepository.login(tcNo, password);
+  Future<void> login(String phoneNumber, String password) async {
+    bool isLogin = await authRepository.login(phoneNumber, password);
 
     if (isLogin) {
       Get.offAllNamed(Routes.mainScreen);

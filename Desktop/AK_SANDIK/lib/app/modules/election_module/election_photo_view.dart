@@ -100,7 +100,9 @@ class ElectionPhotoView extends StatelessWidget {
                                       child: buildPictures(context),
                                     ),
                                   )
-                                : buildTextInfo(),
+                                : controller.imageLoading
+                                    ? const CircularProgressIndicator()
+                                    : buildTextInfo(),
                             buildButtons(
                               isAllFull,
                               context,
@@ -117,23 +119,25 @@ class ElectionPhotoView extends StatelessWidget {
     );
   }
 
-  Row buildPictures(BuildContext context) {
-    return Row(
-      children: [
-        controller.districtPhoto != null
-            ? buildPhoto(context, controller.districtPhoto!)
-            : isExistPhotoOnApi(context, VoteType.district.value),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8.0),
-          child: controller.councilPhoto != null
-              ? buildPhoto(context, controller.councilPhoto!)
-              : isExistPhotoOnApi(context, VoteType.council.value),
-        ),
-        controller.cityPhoto != null
-            ? buildPhoto(context, controller.cityPhoto!)
-            : isExistPhotoOnApi(context, VoteType.city.value),
-      ],
-    );
+  Widget buildPictures(BuildContext context) {
+    return controller.imageLoading
+        ? const CircularProgressIndicator()
+        : Row(
+            children: [
+              controller.districtPhoto != null
+                  ? buildPhoto(context, controller.districtPhoto!)
+                  : isExistPhotoOnApi(context, VoteType.district.value),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                child: controller.councilPhoto != null
+                    ? buildPhoto(context, controller.councilPhoto!)
+                    : isExistPhotoOnApi(context, VoteType.council.value),
+              ),
+              controller.cityPhoto != null
+                  ? buildPhoto(context, controller.cityPhoto!)
+                  : isExistPhotoOnApi(context, VoteType.city.value),
+            ],
+          );
   }
 
   Widget isExistPhotoOnApi(BuildContext context, String type) {
@@ -142,6 +146,7 @@ class ElectionPhotoView extends StatelessWidget {
         ? InstaImageViewer(
             child: CachedNetworkImage(
               fit: BoxFit.cover,
+              placeholder: (context, url) => const CircularIndicator(),
               height: AppMediaQuery.height(0.20, context),
               width: AppMediaQuery.width(0.30, context),
               imageUrl: "${AppConstants.baseUrl}/${box.reportImage}",

@@ -1,4 +1,6 @@
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:toast/toast.dart';
 import 'package:flutter/material.dart';
 import 'package:ak_sandik/app/commons/app_bar_title.dart';
@@ -13,8 +15,12 @@ import 'package:ak_sandik/app/globals/localizations/localization_keys.dart';
 class LoginView extends StatelessWidget {
   final controller = Get.find<LoginController>();
   final formKey = GlobalKey<FormState>();
-  TextEditingController tcController = TextEditingController();
+  TextEditingController telNoController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
+  var maskFormatter = MaskTextInputFormatter(
+    mask: '0 (###) ### ## ##',
+    filter: {"#": RegExp(r'[0-9]')},
+  );
 
   LoginView({super.key});
 
@@ -80,43 +86,49 @@ class LoginView extends StatelessWidget {
     return Column(
       children: [
         AppFormField(
-          controller: tcController,
-          maxInputLength: 11,
-          requiredInputLength: 10,
-          errorMessage: LocalizationKeys.tcHataMesaj,
-          hintText: LocalizationKeys.tcNo,
+          controller: telNoController,
+          requiredInputLength: 17,
+          errorMessage: LocalizationKeys.telUyariMesaj,
+          hintText: LocalizationKeys.telNo,
           icon: const Icon(FontAwesomeIcons.addressCard),
           keyboardType: TextInputType.phone,
-        ),
-        AppFormField(
-          controller: passwordController,
-          hintText: LocalizationKeys.sifre,
-          icon: const Icon(FontAwesomeIcons.lock),
+          textInputFormatter: [maskFormatter],
+          onChanged: (value) {
+            if (value.isEmpty) {
+              telNoController.value = const TextEditingValue(text: "0");
+            }
+          },
         ),
         Padding(
-          padding: EdgeInsets.only(top: 20.0.h),
-          child: SizedBox(
-            width: double.infinity,
-            height: 50,
-            child: ElevatedButton(
-              onPressed: () async {
-                if (formKey.currentState!.validate()) {
-                  controller.login(
-                      tcController.text.trim(), passwordController.text.trim());
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                backgroundColor: AppColors.primary,
+          padding: const EdgeInsets.only(top: 8.0, bottom: 20),
+          child: AppFormField(
+            controller: passwordController,
+            hintText: LocalizationKeys.sifre,
+            keyboardType: TextInputType.text,
+            icon: const Icon(FontAwesomeIcons.lock),
+          ),
+        ),
+        SizedBox(
+          width: double.infinity,
+          height: 50,
+          child: ElevatedButton(
+            onPressed: () async {
+              String phoneNumber = "0${maskFormatter.getUnmaskedText()}";
+              if (formKey.currentState!.validate()) {
+                controller.login(phoneNumber, passwordController.text.trim());
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
               ),
-              child: const Text(
-                LocalizationKeys.giris,
-                style: TextStyle(
-                  fontSize: 20,
-                  color: Colors.white,
-                ),
+              backgroundColor: AppColors.primary,
+            ),
+            child: const Text(
+              LocalizationKeys.giris,
+              style: TextStyle(
+                fontSize: 20,
+                color: Colors.white,
               ),
             ),
           ),
